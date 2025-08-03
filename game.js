@@ -147,6 +147,14 @@ function initGame() {
     canvas = document.getElementById('gameCanvas');
     ctx = canvas.getContext('2d');
     
+    // Verify canvas is properly initialized
+    if (!canvas || !ctx) {
+        console.error('Canvas not found or context not available!');
+        return;
+    }
+    
+    console.log('Canvas initialized:', canvas.width, 'x', canvas.height);
+    
     // Initialize player
     player = new Player(SCREEN_WIDTH / 2 - PLAYER_WIDTH / 2, SCREEN_HEIGHT - 100);
     
@@ -158,13 +166,17 @@ function initGame() {
     OBSTACLE_SPEED = 3;
     obstacles = [];
     
+    // Update score display
+    updateScoreDisplay();
+    
     // Start game loop
     gameRunning = true;
-    gameLoop();
-    
     console.log("Starting Surr 2D Car Race!");
     console.log("Use arrow keys to move, avoid the obstacles!");
     console.log("Press R to restart after game over.");
+    
+    // Start the game loop
+    gameLoop();
 }
 
 function spawnObstacle() {
@@ -208,8 +220,11 @@ function updateDifficulty() {
 }
 
 function drawRoad() {
+    // Clear canvas first
+    ctx.clearRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    
     // Fill background with dark gray
-    ctx.fillStyle = '#333333';
+    ctx.fillStyle = '#444444';
     ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
     
     // Draw road edges
@@ -366,7 +381,11 @@ canvas.addEventListener('contextmenu', (e) => {
 
 // Start the game when page loads
 window.addEventListener('load', () => {
-    initGame();
+    console.log('Page loaded, initializing game...');
+    // Add a small delay to ensure DOM is fully ready
+    setTimeout(() => {
+        initGame();
+    }, 100);
 });
 
 // Handle window focus/blur for better performance
