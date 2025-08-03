@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surr 2D Car Race - Web Version</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: white;
+        }
+        
+        h1 {
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+        }
+        
+        .game-info {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 800px;
+        }
+        
+        .controls {
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
+        #gameCanvas {
+            border: 3px solid #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            background: #333;
+        }
+        
+        .score-display {
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .github-link {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 5px;
+            text-decoration: none;
+            color: #fff;
+            transition: background 0.3s;
+        }
+        
+        .github-link:hover {
+            background: rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <h1>🏎️ Surr 2D Car Race 🏎️</h1>
+    
+    <div class="game-info">
+        <div class="controls">
+            <strong>Controls:</strong> Arrow Keys to move • R to restart after game over • ESC to pause
+        </div>
+        <div>Avoid the obstacles and survive as long as possible!</div>
+    </div>
+    
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    
+    <div class="score-display" id="scoreDisplay">Score: 0</div>
+    
+    <a href="https://github.com/surya8966-tech/cargames1.ai" class="github-link" target="_blank">
+        View on GitHub
+    </a>
+    
+    <script src="game.js"></script>
+</body>
+</html>
