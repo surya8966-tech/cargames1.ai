@@ -24,7 +24,7 @@
         let roadOffset = 0; // For moving road effect
 
         // Player car
-        let car = { x: 180, y: 500, w: 40, h: 60, speed: 6 };
+        let car = { x: 180, y: 300, w: 40, h: 60, speed: 6, forwardSpeed: 2 };
 
         // Obstacles
         let obstacles = [];
@@ -36,17 +36,28 @@
         function update() {
             if (gameOver) return;
 
-            // Move car (with racing forward motion)
+            // Automatic forward motion (car always moves forward)
+            car.y -= car.forwardSpeed;
+            
+            // Wrap car position (when it goes off top, bring back to bottom)
+            if (car.y < -car.h) {
+                car.y = canvas.height;
+            }
+            
+            // Manual steering controls
             if (keys['ArrowLeft'] && car.x > 0) car.x -= 5;
             if (keys['ArrowRight'] && car.x < 360) car.x += 5;
-            if (keys['ArrowUp'] && car.y > 0) {
-                car.y -= 4;
-                car.speed = Math.min(8, car.speed + 0.1); // Speed up when going forward
-            } else if (keys['ArrowDown'] && car.y < 540) {
-                car.y += 4;
-                car.speed = Math.max(3, car.speed - 0.1); // Slow down when going back
+            
+            // Speed control (affects obstacle speed and road animation)
+            if (keys['ArrowUp']) {
+                car.speed = Math.min(8, car.speed + 0.1); // Speed up
+                car.forwardSpeed = Math.min(4, car.forwardSpeed + 0.05);
+            } else if (keys['ArrowDown']) {
+                car.speed = Math.max(3, car.speed - 0.1); // Slow down
+                car.forwardSpeed = Math.max(1, car.forwardSpeed - 0.05);
             } else {
-                car.speed = Math.max(4, car.speed - 0.05); // Gradual speed normalization
+                car.speed = Math.max(4, car.speed - 0.02); // Gradual normalization
+                car.forwardSpeed = Math.max(2, car.forwardSpeed - 0.02);
             }
 
             // Spawn obstacles
@@ -157,7 +168,7 @@
         function restart() {
             gameOver = false;
             score = 0;
-            car = { x: 180, y: 500, w: 40, h: 60, speed: 6 };
+            car = { x: 180, y: 300, w: 40, h: 60, speed: 6, forwardSpeed: 2 };
             obstacles = [];
             frame = 0;
             roadOffset = 0;
