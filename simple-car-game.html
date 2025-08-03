@@ -21,9 +21,10 @@
         let score = 0;
         let gameOver = false;
         let frame = 0;
+        let roadOffset = 0; // For moving road effect
 
         // Player car
-        let car = { x: 180, y: 500, w: 40, h: 60 };
+        let car = { x: 180, y: 500, w: 40, h: 60, speed: 6 };
 
         // Obstacles
         let obstacles = [];
@@ -35,20 +36,27 @@
         function update() {
             if (gameOver) return;
 
-            // Move car
-            if (keys['ArrowLeft'] && car.x > 0) car.x -= 4;
-            if (keys['ArrowRight'] && car.x < 360) car.x += 4;
-            if (keys['ArrowUp'] && car.y > 0) car.y -= 4;
-            if (keys['ArrowDown'] && car.y < 540) car.y += 4;
+            // Move car (with racing forward motion)
+            if (keys['ArrowLeft'] && car.x > 0) car.x -= 5;
+            if (keys['ArrowRight'] && car.x < 360) car.x += 5;
+            if (keys['ArrowUp'] && car.y > 0) {
+                car.y -= 4;
+                car.speed = Math.min(8, car.speed + 0.1); // Speed up when going forward
+            } else if (keys['ArrowDown'] && car.y < 540) {
+                car.y += 4;
+                car.speed = Math.max(3, car.speed - 0.1); // Slow down when going back
+            } else {
+                car.speed = Math.max(4, car.speed - 0.05); // Gradual speed normalization
+            }
 
             // Spawn obstacles
             if (frame % 80 === 0) {
                 obstacles.push({ x: Math.random() * 360, y: -60, w: 40, h: 60 });
             }
 
-            // Move obstacles
+            // Move obstacles (based on car speed for racing effect)
             for (let i = 0; i < obstacles.length; i++) {
-                obstacles[i].y += 3;
+                obstacles[i].y += car.speed;
                 
                 // Remove off-screen
                 if (obstacles[i].y > 600) {
@@ -79,21 +87,43 @@
             ctx.fillRect(0, 0, 5, 600);
             ctx.fillRect(395, 0, 5, 600);
 
-            // Draw lane lines
+            // Draw moving lane lines (racing effect)
             ctx.fillStyle = 'yellow';
-            for (let y = 0; y < 600; y += 30) {
-                ctx.fillRect(130, y, 3, 15);
-                ctx.fillRect(270, y, 3, 15);
+            for (let y = -30; y < 630; y += 30) {
+                let lineY = (y + roadOffset) % 630;
+                ctx.fillRect(130, lineY, 3, 15);
+                ctx.fillRect(270, lineY, 3, 15);
+            }
+            
+            // Update road animation
+            if (!gameOver) {
+                roadOffset += car.speed;
+                if (roadOffset >= 30) roadOffset = 0;
             }
 
             if (!gameOver) {
-                // Draw player car (blue)
+                // Draw player car (blue racing car)
                 ctx.fillStyle = 'blue';
                 ctx.fillRect(car.x, car.y, car.w, car.h);
                 
-                // Car details
+                // Car details (racing stripes and windows)
                 ctx.fillStyle = 'lightblue';
-                ctx.fillRect(car.x + 5, car.y + 10, 30, 15);
+                ctx.fillRect(car.x + 5, car.y + 10, 30, 15); // Windshield
+                
+                // Racing stripes
+                ctx.fillStyle = 'white';
+                ctx.fillRect(car.x + 18, car.y, 4, car.h); // Center stripe
+                
+                // Headlights
+                ctx.fillStyle = 'yellow';
+                ctx.fillRect(car.x + 5, car.y + 2, 8, 6);
+                ctx.fillRect(car.x + 27, car.y + 2, 8, 6);
+                
+                // Speed effect (motion blur)
+                if (car.speed > 5) {
+                    ctx.fillStyle = 'rgba(0, 0, 255, 0.3)';
+                    ctx.fillRect(car.x - 2, car.y + car.h, car.w + 4, 8);
+                }
 
                 // Draw obstacles (red)
                 ctx.fillStyle = 'red';
@@ -127,9 +157,10 @@
         function restart() {
             gameOver = false;
             score = 0;
-            car = { x: 180, y: 500, w: 40, h: 60 };
+            car = { x: 180, y: 500, w: 40, h: 60, speed: 6 };
             obstacles = [];
             frame = 0;
+            roadOffset = 0;
             document.getElementById('score').textContent = score;
         }
 
