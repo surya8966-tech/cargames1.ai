@@ -1,370 +1,212 @@
 /**
  * Surr 2D Car Race - Web Version
- * Converted from Python/Pygame to HTML5/JavaScript
+ * FIXED - Simple working implementation
  */
-
-// Game Constants
-const SCREEN_WIDTH = 800;
-const SCREEN_HEIGHT = 600;
-const FPS = 60;
-
-// Colors
-const BLACK = '#000000';
-const WHITE = '#FFFFFF';
-const RED = '#FF0000';
-const BLUE = '#0000FF';
-const GREEN = '#00FF00';
-const YELLOW = '#FFFF00';
-const GRAY = '#808080';
-
-// Player car settings
-const PLAYER_WIDTH = 40;
-const PLAYER_HEIGHT = 60;
-const PLAYER_SPEED = 5;
-
-// Obstacle settings
-const OBSTACLE_WIDTH = 40;
-const OBSTACLE_HEIGHT = 60;
-let OBSTACLE_SPEED = 3;
-const OBSTACLE_SPAWN_RATE = 60;
-
-// Difficulty settings
-const DIFFICULTY_INCREASE_RATE = 0.001;
 
 // Game variables
 let canvas, ctx;
 let gameRunning = false;
 let gameOver = false;
 let score = 0;
-let spawnTimer = 0;
-let difficultyMultiplier = 1.0;
+let frameCount = 0;
 let keys = {};
 
-// Game objects
-let player;
+// Player object
+let player = {
+    x: 380,
+    y: 500,
+    width: 40,
+    height: 60,
+    speed: 5
+};
+
 let obstacles = [];
 
-// Player class
-class Player {
-    constructor(x, y) {
-        this.x = x;
-        this.y = y;
-        this.width = PLAYER_WIDTH;
-        this.height = PLAYER_HEIGHT;
-        this.speed = PLAYER_SPEED;
-    }
-    
-    move() {
-        // Move left (but don't go off screen)
-        if (keys['ArrowLeft'] && this.x > 0) {
-            this.x -= this.speed;
-        }
-        // Move right (but don't go off screen)
-        if (keys['ArrowRight'] && this.x < SCREEN_WIDTH - this.width) {
-            this.x += this.speed;
-        }
-        // Move up (but don't go off screen)
-        if (keys['ArrowUp'] && this.y > 0) {
-            this.y -= this.speed;
-        }
-        // Move down (but don't go off screen)
-        if (keys['ArrowDown'] && this.y < SCREEN_HEIGHT - this.height) {
-            this.y += this.speed;
-        }
-    }
-    
-    draw() {
-        // Draw main car body (blue rectangle)
-        ctx.fillStyle = BLUE;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-        
-        // Draw car details (windows and lights)
-        ctx.fillStyle = WHITE;
-        ctx.fillRect(this.x + 5, this.y + 10, this.width - 10, 15); // Windshield
-        
-        ctx.fillStyle = YELLOW;
-        ctx.fillRect(this.x + 5, this.y + 5, 8, 8); // Left headlight
-        ctx.fillRect(this.x + this.width - 13, this.y + 5, 8, 8); // Right headlight
-    }
-    
-    getRect() {
-        return {
-            x: this.x,
-            y: this.y,
-            width: this.width,
-            height: this.height
-        };
-    }
-}
-
-// Obstacle class
-class Obstacle {
-    constructor(x, y) {
-        this.x = x;
-        this.y = y;
-        this.width = OBSTACLE_WIDTH;
-        this.height = OBSTACLE_HEIGHT;
-        this.speed = OBSTACLE_SPEED;
-        // Random color for variety
-        const colors = [RED, GREEN, YELLOW, GRAY];
-        this.color = colors[Math.floor(Math.random() * colors.length)];
-    }
-    
-    move() {
-        this.y += this.speed;
-    }
-    
-    draw() {
-        // Draw main car body
-        ctx.fillStyle = this.color;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-        
-        // Draw car details
-        ctx.fillStyle = WHITE;
-        ctx.fillRect(this.x + 5, this.y + this.height - 25, this.width - 10, 15); // Rear window
-        
-        ctx.fillStyle = RED;
-        ctx.fillRect(this.x + 5, this.y + this.height - 5, 8, 8); // Left taillight
-        ctx.fillRect(this.x + this.width - 13, this.y + this.height - 5, 8, 8); // Right taillight
-    }
-    
-    getRect() {
-        return {
-            x: this.x,
-            y: this.y,
-            width: this.width,
-            height: this.height
-        };
-    }
-    
-    isOffScreen() {
-        return this.y > SCREEN_HEIGHT;
-    }
-}
-
-// Game functions
-function initGame() {
+// Initialize game
+function init() {
     canvas = document.getElementById('gameCanvas');
     ctx = canvas.getContext('2d');
     
-    // Verify canvas is properly initialized
     if (!canvas || !ctx) {
-        console.error('Canvas not found or context not available!');
+        console.error('Canvas not found!');
         return;
     }
     
-    console.log('Canvas initialized:', canvas.width, 'x', canvas.height);
-    
-    // Initialize player
-    player = new Player(SCREEN_WIDTH / 2 - PLAYER_WIDTH / 2, SCREEN_HEIGHT - 100);
-    
-    // Reset game state
-    gameOver = false;
-    score = 0;
-    spawnTimer = 0;
-    difficultyMultiplier = 1.0;
-    OBSTACLE_SPEED = 3;
-    obstacles = [];
-    
-    // Update score display
-    updateScoreDisplay();
-    
-    // Start game loop
+    console.log('Game initialized successfully!');
     gameRunning = true;
-    console.log("Starting Surr 2D Car Race!");
-    console.log("Use arrow keys to move, avoid the obstacles!");
-    console.log("Press R to restart after game over.");
-    
-    // Start the game loop
     gameLoop();
 }
 
-function spawnObstacle() {
-    const x = Math.random() * (SCREEN_WIDTH - OBSTACLE_WIDTH);
-    obstacles.push(new Obstacle(x, -OBSTACLE_HEIGHT));
+// Create obstacle
+function createObstacle() {
+    return {
+        x: Math.random() * (canvas.width - 40),
+        y: -60,
+        width: 40,
+        height: 60,
+        speed: 3,
+        color: ['#FF0000', '#00FF00', '#FFFF00', '#808080'][Math.floor(Math.random() * 4)]
+    };
 }
 
-function updateObstacles() {
+// Update game
+function update() {
+    if (gameOver) return;
+    
+    // Move player
+    if (keys['ArrowLeft'] && player.x > 0) {
+        player.x -= player.speed;
+    }
+    if (keys['ArrowRight'] && player.x < canvas.width - player.width) {
+        player.x += player.speed;
+    }
+    if (keys['ArrowUp'] && player.y > 0) {
+        player.y -= player.speed;
+    }
+    if (keys['ArrowDown'] && player.y < canvas.height - player.height) {
+        player.y += player.speed;
+    }
+    
+    // Spawn obstacles
+    if (frameCount % 60 === 0) {
+        obstacles.push(createObstacle());
+    }
+    
+    // Update obstacles
     for (let i = obstacles.length - 1; i >= 0; i--) {
-        obstacles[i].move();
+        obstacles[i].y += obstacles[i].speed;
         
-        // Remove obstacles that are off screen and increase score
-        if (obstacles[i].isOffScreen()) {
+        // Remove off-screen obstacles
+        if (obstacles[i].y > canvas.height) {
             obstacles.splice(i, 1);
             score += 10;
-            updateScoreDisplay();
+            updateScore();
+        }
+        // Check collision
+        else if (obstacles[i].x < player.x + player.width &&
+                obstacles[i].x + obstacles[i].width > player.x &&
+                obstacles[i].y < player.y + player.height &&
+                obstacles[i].y + obstacles[i].height > player.y) {
+            gameOver = true;
+            console.log('Game Over! Score:', score);
         }
     }
-}
-
-function checkCollisions() {
-    const playerRect = player.getRect();
     
-    for (let obstacle of obstacles) {
-        const obstacleRect = obstacle.getRect();
-        
-        // Simple rectangle collision detection
-        if (playerRect.x < obstacleRect.x + obstacleRect.width &&
-            playerRect.x + playerRect.width > obstacleRect.x &&
-            playerRect.y < obstacleRect.y + obstacleRect.height &&
-            playerRect.y + playerRect.height > obstacleRect.y) {
-            return true;
-        }
-    }
-    return false;
+    frameCount++;
 }
 
-function updateDifficulty() {
-    difficultyMultiplier += DIFFICULTY_INCREASE_RATE;
-    OBSTACLE_SPEED = 3 * difficultyMultiplier;
-}
-
-function drawRoad() {
-    // Clear canvas first
-    ctx.clearRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+// Draw everything
+function draw() {
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Fill background with dark gray
+    // Draw road background
     ctx.fillStyle = '#444444';
-    ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // Draw road edges
-    ctx.fillStyle = WHITE;
-    ctx.fillRect(0, 0, 10, SCREEN_HEIGHT); // Left edge
-    ctx.fillRect(SCREEN_WIDTH - 10, 0, 10, SCREEN_HEIGHT); // Right edge
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, 10, canvas.height);
+    ctx.fillRect(canvas.width - 10, 0, 10, canvas.height);
     
-    // Draw lane markings (dashed lines)
-    ctx.fillStyle = YELLOW;
-    const laneWidth = SCREEN_WIDTH / 3;
-    
-    for (let lane = 1; lane < 3; lane++) {
-        const x = lane * laneWidth;
-        for (let y = 0; y < SCREEN_HEIGHT; y += 40) {
-            ctx.fillRect(x - 2, y, 4, 20);
-        }
-    }
-}
-
-function drawUI() {
-    ctx.fillStyle = WHITE;
-    ctx.font = '20px Arial';
-    ctx.fillText(`Score: ${score}`, 20, 30);
-    
-    // Instructions
-    ctx.font = '14px Arial';
-    ctx.fillText('Arrow Keys: Move', 20, SCREEN_HEIGHT - 40);
-    ctx.fillText('R: Restart', 20, SCREEN_HEIGHT - 20);
-}
-
-function drawGameOver() {
-    // Semi-transparent overlay
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-    
-    // Game over text
-    ctx.fillStyle = RED;
-    ctx.font = 'bold 48px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('GAME OVER', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 50);
-    
-    // Final score
-    ctx.fillStyle = WHITE;
-    ctx.font = '24px Arial';
-    ctx.fillText(`Final Score: ${score}`, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
-    
-    // Restart instructions
-    ctx.font = '18px Arial';
-    ctx.fillText('Press R to Restart', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 50);
-    
-    // Reset text alignment
-    ctx.textAlign = 'left';
-}
-
-function restartGame() {
-    gameOver = false;
-    score = 0;
-    spawnTimer = 0;
-    difficultyMultiplier = 1.0;
-    OBSTACLE_SPEED = 3;
-    
-    // Reset player position
-    player = new Player(SCREEN_WIDTH / 2 - PLAYER_WIDTH / 2, SCREEN_HEIGHT - 100);
-    
-    // Clear all obstacles
-    obstacles = [];
-    
-    updateScoreDisplay();
-    console.log("Game restarted!");
-}
-
-function updateScoreDisplay() {
-    document.getElementById('scoreDisplay').textContent = `Score: ${score}`;
-}
-
-function gameLoop() {
-    if (!gameRunning) return;
-    
-    if (!gameOver) {
-        // Update player
-        player.move();
-        
-        // Spawn obstacles
-        spawnTimer++;
-        if (spawnTimer >= OBSTACLE_SPAWN_RATE) {
-            spawnObstacle();
-            spawnTimer = 0;
-        }
-        
-        // Update obstacles
-        updateObstacles();
-        
-        // Check for collisions
-        if (checkCollisions()) {
-            gameOver = true;
-            console.log(`Game Over! Final Score: ${score}`);
-        }
-        
-        // Update difficulty
-        updateDifficulty();
+    // Draw lane lines
+    ctx.fillStyle = '#FFFF00';
+    for (let y = 0; y < canvas.height; y += 40) {
+        ctx.fillRect(canvas.width / 3 - 2, y, 4, 20);
+        ctx.fillRect((canvas.width * 2) / 3 - 2, y, 4, 20);
     }
     
-    // Draw everything
-    drawRoad();
-    
     if (!gameOver) {
-        // Draw game objects
-        player.draw();
+        // Draw player
+        ctx.fillStyle = '#0000FF';
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+        
+        // Draw player details
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(player.x + 5, player.y + 10, 30, 15);
+        ctx.fillStyle = '#FFFF00';
+        ctx.fillRect(player.x + 5, player.y + 5, 8, 8);
+        ctx.fillRect(player.x + 27, player.y + 5, 8, 8);
+        
+        // Draw obstacles
         for (let obstacle of obstacles) {
-            obstacle.draw();
+            ctx.fillStyle = obstacle.color;
+            ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            
+            // Obstacle details
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(obstacle.x + 5, obstacle.y + 35, 30, 15);
+            ctx.fillStyle = '#FF0000';
+            ctx.fillRect(obstacle.x + 5, obstacle.y + 52, 8, 8);
+            ctx.fillRect(obstacle.x + 27, obstacle.y + 52, 8, 8);
         }
         
         // Draw UI
-        drawUI();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '20px Arial';
+        ctx.fillText('Score: ' + score, 20, 30);
+        ctx.font = '14px Arial';
+        ctx.fillText('Arrow Keys: Move', 20, canvas.height - 40);
+        ctx.fillText('R: Restart', 20, canvas.height - 20);
     } else {
-        // Draw game over screen
-        drawGameOver();
+        // Game over screen
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = '#FF0000';
+        ctx.font = 'bold 48px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 50);
+        
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '24px Arial';
+        ctx.fillText('Final Score: ' + score, canvas.width / 2, canvas.height / 2);
+        
+        ctx.font = '18px Arial';
+        ctx.fillText('Press R to Restart', canvas.width / 2, canvas.height / 2 + 50);
+        
+        ctx.textAlign = 'left';
     }
+}
+
+// Game loop
+function gameLoop() {
+    if (!gameRunning) return;
     
-    // Continue game loop
+    update();
+    draw();
+    
     requestAnimationFrame(gameLoop);
+}
+
+// Restart game
+function restart() {
+    gameOver = false;
+    score = 0;
+    frameCount = 0;
+    player.x = 380;
+    player.y = 500;
+    obstacles = [];
+    updateScore();
+    console.log('Game restarted!');
+}
+
+// Update score display
+function updateScore() {
+    const scoreElement = document.getElementById('scoreDisplay');
+    if (scoreElement) {
+        scoreElement.textContent = 'Score: ' + score;
+    }
 }
 
 // Event listeners
 document.addEventListener('keydown', (e) => {
     keys[e.key] = true;
     
-    // Handle special keys
-    if (e.key === 'r' || e.key === 'R') {
-        if (gameOver) {
-            restartGame();
-        }
+    if ((e.key === 'r' || e.key === 'R') && gameOver) {
+        restart();
     }
     
-    if (e.key === 'Escape') {
-        // Pause/unpause functionality could be added here
-        console.log('ESC pressed');
-    }
-    
-    // Prevent default behavior for arrow keys
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
     }
@@ -374,27 +216,8 @@ document.addEventListener('keyup', (e) => {
     keys[e.key] = false;
 });
 
-// Prevent context menu on right click
-canvas.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-});
-
-// Start the game when page loads
+// Start game when page loads
 window.addEventListener('load', () => {
-    console.log('Page loaded, initializing game...');
-    // Add a small delay to ensure DOM is fully ready
-    setTimeout(() => {
-        initGame();
-    }, 100);
-});
-
-// Handle window focus/blur for better performance
-window.addEventListener('blur', () => {
-    // Pause game when window loses focus
-    keys = {}; // Clear all keys
-});
-
-window.addEventListener('focus', () => {
-    // Resume game when window gains focus
-    keys = {};
+    console.log('Page loaded, starting game...');
+    setTimeout(init, 100);
 });
